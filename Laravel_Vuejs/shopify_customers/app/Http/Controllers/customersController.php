@@ -68,7 +68,6 @@ class CustomersController extends Controller
                         'email' => $customer['email'],
                         'phone' => $customer['phone'],
                         'country' => $customer['country'],
-//                            'weatcher' => $customer['weatcher'],
                     ];
                     if (empty($existedCustomerIds)) {
                         $bulkInsert[] = $customerData;
@@ -93,7 +92,6 @@ class CustomersController extends Controller
                         $customer->email = $customerItem['email'];
                         $customer->phone = $customerItem['phone'];
                         $customer->country = $customerItem['country'];
-//                        'weatcher' => $customerItem['weatcher'],
                         $customer->save();
                     }
                 }

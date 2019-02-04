@@ -1,17 +1,20 @@
 <?php
 
-class Custom_Webshop_Model_DbTable_Hkvproductbrands {
+class Custom_Webshop_Model_DbTable_Hkvproductbrands
+{
 
     private $_dbh;
 
-    public function __construct() {
-		if (Zend_Registry::isRegistered('hakvoortDbh')) {
-			$this->_dbh = Zend_Registry::get('hakvoortDbh');
-		}
+    public function __construct()
+    {
+        if (Zend_Registry::isRegistered('hakvoortDbh')) {
+            $this->_dbh = Zend_Registry::get('hakvoortDbh');
+        }
     }
 
-	public function getDbPrefixByAdminCode($adminCode ,$db) {
-		
+    public function getDbPrefixByAdminCode($adminCode, $db)
+    {
+
         $results = $db->prepare($query = "
 			SELECT
 				A.adnDBPrefix AS `%dbprf%`,
@@ -39,18 +42,19 @@ class Custom_Webshop_Model_DbTable_Hkvproductbrands {
 				A.adnAdminkode = :adminCode
 
 		");
-		
+
         $results->bindParam("adminCode", $adminCode);
-		$results->execute();
-		$prefixes = $results->fetchAll();
-		return current($prefixes[0]);
+        $results->execute();
+        $prefixes = $results->fetchAll();
+        return current($prefixes[0]);
     }
-	
-	public function getAllBrands(){
-		$language = strtoupper(WEBSITE_LANG);
-		$websiteCode = HAKVOORT_WEBSITE_CODE;
-		
-		$results = $this->_dbh->prepare("
+
+    public function getAllBrands()
+    {
+        $language = strtoupper(WEBSITE_LANG);
+        $websiteCode = HAKVOORT_WEBSITE_CODE;
+
+        $results = $this->_dbh->prepare("
 			SELECT
 				M.mrkMerkkode,
 				M.mrkMerknaam,
@@ -78,31 +82,32 @@ class Custom_Webshop_Model_DbTable_Hkvproductbrands {
 			GROUP BY
 				M.mrkMerkkode");
 
-		$results->bindParam('language', $language);
-		$results->bindParam('websiteCode', $websiteCode);
-		
-		$results->execute();
-		$merken = $results->fetchAll();
-		return $merken;
-	}
-	
-	
-	public function getBrands() {
-		$dbh = Zend_Registry::get('dbh');
-		$websiteDetails = Zend_Registry::get('website');
-		
-		$websiteId = $websiteDetails['website_id'];
+        $results->bindParam('language', $language);
+        $results->bindParam('websiteCode', $websiteCode);
+
+        $results->execute();
+        $merken = $results->fetchAll();
+        return $merken;
+    }
+
+
+    public function getBrands()
+    {
+        $dbh = Zend_Registry::get('dbh');
+        $websiteDetails = Zend_Registry::get('website');
+
+        $websiteId = $websiteDetails['website_id'];
         $websiteCode = $websiteDetails['website_code'];
-       
-		$config = Zend_Registry::get("config");
-		$db = new Zend_Db_Adapter_Pdo_Mysql(array(
-                    'host' => $config->digiself->externalDb->params->host,
-                    'username' => $config->digiself->externalDb->params->username,
-                    'password' => $config->digiself->externalDb->params->password,
-                    'dbname' => $config->digiself->externalDb->params->dbname
-                ));
-		
-		$query = "
+
+        $config = Zend_Registry::get("config");
+        $db = new Zend_Db_Adapter_Pdo_Mysql(array(
+            'host' => $config->digiself->externalDb->params->host,
+            'username' => $config->digiself->externalDb->params->username,
+            'password' => $config->digiself->externalDb->params->password,
+            'dbname' => $config->digiself->externalDb->params->dbname
+        ));
+
+        $query = "
 			SELECT 
 				*
 			FROM
@@ -110,24 +115,25 @@ class Custom_Webshop_Model_DbTable_Hkvproductbrands {
 			WHERE 
 				website_id = :websiteId
 		";
-		
-		$stmt = $dbh ->prepare($query);
-		$stmt->bindParam('websiteId', $websiteId);
-		$stmt->execute();
-		
-		$websiteSettings = $stmt->fetch();
-		
-		$dbprf = $this->getDbPrefixByAdminCode($websiteSettings['admin_code'] , $db);
-		
-		$query = "SELECT mrkMerkkode FROM " . $dbprf . "merk";
-		$stmt = $db ->prepare($query);
-		$stmt->execute();
-		
-		$results = $stmt->fetchAll(PDO::FETCH_COLUMN);
-		return $results;
+
+        $stmt = $dbh->prepare($query);
+        $stmt->bindParam('websiteId', $websiteId);
+        $stmt->execute();
+
+        $websiteSettings = $stmt->fetch();
+
+        $dbprf = $this->getDbPrefixByAdminCode($websiteSettings['admin_code'], $db);
+
+        $query = "SELECT mrkMerkkode FROM " . $dbprf . "merk";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+
+        $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        return $results;
     }
-	
-    public function getBrandImage($brandId) {
+
+    public function getBrandImage($brandId)
+    {
         $query = $this->_dbh->prepare("
             SELECT
                 AO.mrkLogo
@@ -136,36 +142,38 @@ class Custom_Webshop_Model_DbTable_Hkvproductbrands {
             WHERE
                 AO.mrkMerkkode = :brandId
            ");
-		
+
         $query->bindParam("brandId", $brandId);
         $query->execute();
         $result = $query->fetchAll();
         return $result[0];
     }
-	
-	public function getBrandsImages($brandIds) {
+
+    public function getBrandsImages($brandIds)
+    {
         $query = $this->_dbh->prepare("
             SELECT
 				AO.mrkMerkkode,
                 AO.mrkLogo			
             FROM
                 `%artprf%merk` AS AO
-            WHERE ".$this->_dbh->quoteInto('AO.mrkMerkkode IN (?)', $brandIds)."
+            WHERE " . $this->_dbh->quoteInto('AO.mrkMerkkode IN (?)', $brandIds) . "
                 
            ");
-        
+
         $query->execute();
-		
+
         $result = $query->fetchAll();
-		$merken = array();
-		foreach($result as $res){
-			$merken[$res['mrkMerkkode']] = $res['mrkLogo'];							
-		}
-		
+        $merken = array();
+        foreach ($result as $res) {
+            $merken[$res['mrkMerkkode']] = $res['mrkLogo'];
+        }
+
         return $merken;
     }
 
-    public function getBrandImageAndCodeByProductId($productId) {
+    public function getBrandImageAndCodeByProductId($productId)
+    {
         $sql = "SELECT
                     m.*
                 FROM
@@ -188,7 +196,8 @@ class Custom_Webshop_Model_DbTable_Hkvproductbrands {
         }
     }
 
-    public function getBrandDescription($brandId) {
+    public function getBrandDescription($brandId)
+    {
         $language = strtoupper(WEBSITE_LANG);
         $query = $this->_dbh->prepare("
             SELECT
@@ -211,7 +220,8 @@ class Custom_Webshop_Model_DbTable_Hkvproductbrands {
         }
     }
 
-    public function getRandomBrandsImages($count) {
+    public function getRandomBrandsImages($count)
+    {
         $query = $this->_dbh->prepare("
             SELECT
                 AO.mrkLogo,
@@ -225,12 +235,13 @@ class Custom_Webshop_Model_DbTable_Hkvproductbrands {
         $result = $query->fetchAll();
         return $result;
     }
-	
-	public function getBrand($brandId){
-		
-		$language = strtoupper(WEBSITE_LANG);
-		
-		$query = $this->_dbh->prepare("
+
+    public function getBrand($brandId)
+    {
+
+        $language = strtoupper(WEBSITE_LANG);
+
+        $query = $this->_dbh->prepare("
             SELECT M.mrkMerkkode,
 				M.mrkMerknaam,
 				M.mrkWebsite,
@@ -241,18 +252,18 @@ class Custom_Webshop_Model_DbTable_Hkvproductbrands {
 				ON (MT.mktMerkkode = M.mrkMerkkode AND MT.mktTaal = :language)
 			WHERE M.mrkMerkkode = :brandId 
            ");
-	
-		$query->bindParam("brandId", $brandId);
-		$query->bindParam("language", $language);
-		$query->execute();
+
+        $query->bindParam("brandId", $brandId);
+        $query->bindParam("language", $language);
+        $query->execute();
         $result = $query->fetch();
-		
-		if($result == false)
-			return array();
-			
+
+        if ($result == false)
+            return array();
+
         return $result;
-		
-	}
-	
+
+    }
+
 
 }
